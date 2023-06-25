@@ -1,0 +1,63 @@
+<?php
+// Configuration
+$config = [
+    'server_url' => 'http://your-server-url.com', // Replace with your VPS server URL
+    'log_file' => 'uptime_log.txt', // Path to the log file
+    'telegram' => [
+        'bot_token' => 'YOUR_TELEGRAM_BOT_TOKEN', // Replace with your Telegram bot token
+        'chat_id' => 'YOUR_TELEGRAM_CHAT_ID' // Replace with your Telegram chat ID
+    ]
+];
+
+// Function to check server status
+function checkServerStatus($serverURL) {
+    $ch = curl_init($serverURL);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_exec($ch);
+    $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $responseCode;
+}
+
+// Function to send Telegram message
+function sendTelegramMessage($message, $config) {
+    $url = 'https://api.telegram.org/bot' . $config['telegram']['bot_token'] . '/sendMessage';
+    $data = [
+        'chat_id' => $config['telegram']['chat_id'],
+        'text' => $message,
+    ];
+
+    $options = [
+        CURLOPT_URL => $url,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $data,
+        CURLOPT_RETURNTRANSFER => true
+    ];
+
+    $ch = curl_init();
+    curl_setopt_array($ch, $options);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+// Check server status
+$statusCode = checkServerStatus($config['server_url']);
+$status = ($statusCode === 200) ? 'UP' : 'DOWN';
+
+// Log the status and timestamp
+$logEntry = date('Y-m-d H:i:s') . ' | ' . $status . PHP_EOL;
+file_put_contents($config['log_file'], $logEntry, FILE_APPEND);
+
+// Send Telegram message if the status has changed
+$previousStatus = file_exists($config['log_file']) ? file_get_contents($config['log_file']) : '';
+$previousStatus = explode(' | ', trim($previousStatus));
+$previousStatus = end($previousStatus);
+
+if ($status !== $previousStatus) {
+    $message = 'Server Status: ' . $status;
+    sendTelegramMessage($message, $config);
+}
+
+// Output the result
+echo 'Server Status: ' . $status;
+?>
