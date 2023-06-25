@@ -1,0 +1,4 @@
+Replace 'YOUR_TELEGRAM_BOT_TOKEN' and 'YOUR_TELEGRAM_CHAT_ID' in the $config array with your actual Telegram bot token and chat ID.
+
+
+Now, whenever the server status changes, the script will send a message to your Telegram bot, and you will receive the notification in the specified chat.
